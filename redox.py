@@ -12,6 +12,7 @@ Authoritative layout sources:
 Usage:
   python redox.py          # MX switches
   python redox.py --choc   # Choc switches (experimental)
+  python redox.py --glp    # Gateron Low Profile KS-33 (MX sockets, slimmer case)
 """
 
 import json
@@ -24,12 +25,25 @@ from klavgen import *
 # Switch type
 # ---------------------------------------------------------------------------
 use_choc = "--choc" in sys.argv
+use_glp  = "--glp"  in sys.argv
+
+# Gateron Low Profile KS-33:
+#   Same 14x14mm plate cutout as MX, same Kailh MX hotswap sockets,
+#   but the switch body below the plate is shorter (≈2.2 mm vs MX's 5 mm).
+#   We use MX plate cutouts + Choc-height case to keep things slim.
+switch_type = SwitchType.CHOC if use_choc else SwitchType.MX
+
+if use_glp:
+    case_height = 9        # slimmer: GLP switches + socket stack
+else:
+    case_height = 11        # standard MX height
 
 config = Config(
     case_config=CaseConfig(
         side_fillet=None,              # disable until case outline is contoured (CadQuery finicky)
         palm_rests_top_fillet=None,
-        switch_type=SwitchType.CHOC if use_choc else SwitchType.MX,
+        switch_type=switch_type,
+        case_base_height=case_height,
     ),
     mx_key_config=MXKeyConfig(case_tile_margin=7.5),
     choc_key_config=ChocKeyConfig(case_tile_margin=7.6),
@@ -216,7 +230,13 @@ palm_rests = [
 # ---------------------------------------------------------------------------
 # Generate
 # ---------------------------------------------------------------------------
-print(f"Generating Redox {'Choc' if use_choc else 'MX'} keyboard — {len(keys)} keys")
+if use_glp:
+    label = "Gateron Low Profile"
+elif use_choc:
+    label = "Choc"
+else:
+    label = "MX"
+print(f"Generating Redox {label} keyboard — {len(keys)} keys")
 print(f"  Bounding box: [{min_x:.0f}, {min_y:.0f}] – [{max_x:.0f}, {max_y:.0f}] mm")
 
 keyboard_result = render_and_save_keyboard(
