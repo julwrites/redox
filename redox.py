@@ -27,8 +27,8 @@ use_choc = "--choc" in sys.argv
 
 config = Config(
     case_config=CaseConfig(
-        side_fillet=None,              # disable fillets during dev (CadQuery is finicky)
-        palm_rests_top_fillet=None,    # enable these once layout is confirmed
+        side_fillet=None,              # disable until case outline is contoured (CadQuery finicky)
+        palm_rests_top_fillet=None,
         switch_type=SwitchType.CHOC if use_choc else SwitchType.MX,
     ),
     mx_key_config=MXKeyConfig(case_tile_margin=7.5),
