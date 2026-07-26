@@ -1,13 +1,8 @@
 """Redox keyboard generator for klavgen.
 
-Generates left half of a Redox split keyboard (Reduced Ergodox).
-Main key grid positions from the official VIA/Redox KLE layout, thumb cluster
-placed manually to match the physical layout.
-
-Authoritative layout sources:
-  VIA  – https://github.com/the-via/keyboards (rotation / size)
-  QMK  – keyboards/redox/info.json (matrix mapping)
-  KLE  – keyboard-layout-editor.com permalink in the Redox README
+Generates the left half of a Redox split keyboard (Reduced Ergodox).
+ALL switch positions are taken directly from the official Redox rev1.0 KiCad PCB
+files (redox_rev1.kicad_pcb) — this is the single authoritative source.
 
 Usage:
   python redox.py          # MX switches
@@ -15,9 +10,7 @@ Usage:
   python redox.py --glp    # Gateron Low Profile KS-33 (MX sockets, slimmer case)
 """
 
-import json
 import sys
-import math
 
 from klavgen import *
 
@@ -27,20 +20,12 @@ from klavgen import *
 use_choc = "--choc" in sys.argv
 use_glp  = "--glp"  in sys.argv
 
-# Gateron Low Profile KS-33:
-#   Same 14x14mm plate cutout as MX, same Kailh MX hotswap sockets,
-#   but the switch body below the plate is shorter (≈2.2 mm vs MX's 5 mm).
-#   We use MX plate cutouts + Choc-height case to keep things slim.
 switch_type = SwitchType.CHOC if use_choc else SwitchType.MX
-
-if use_glp:
-    case_height = 9        # slimmer: GLP switches + socket stack
-else:
-    case_height = 11        # standard MX height
+case_height = 9 if use_glp else 11
 
 config = Config(
     case_config=CaseConfig(
-        side_fillet=None,              # disable until case outline is contoured (CadQuery finicky)
+        side_fillet=None,
         palm_rests_top_fillet=None,
         switch_type=switch_type,
         case_base_height=case_height,
@@ -55,134 +40,106 @@ KEYCAP_1_25U_WIDTH = round(MX_KEYCAP_1U_WIDTH + 0.25 * MX_KEY_X_SPACING, 4)
 KEYCAP_1_5U_HEIGHT = round(MX_KEYCAP_1U_DEPTH + 0.5  * MX_KEY_Y_SPACING, 4)
 
 # ---------------------------------------------------------------------------
-# Main key grid — positions from the official Redox KLE layout
+# Keys — exact positions from KiCad redox_rev1.kicad_pcb
 # ---------------------------------------------------------------------------
+# KiCad coordinates: origin is somewhere on the PCB, y increases downward.
+# klavgen: origin is flexible (centred later), y increases upward.
+# We negate the KiCad y values so that row 0 (top) → higher klavgen y,
+# and centre the layout around a convenient origin.
 
-# KLE JSON for the left-half main grid (VIA-based, right-half keys stripped).
-# This produces correct column stagger, key widths, and vertical offsets.
-_KLE_MAIN_GRID = [
-    {"name": "Redox Left (main grid)"},
-    # Physical row 0 (top) — spread across KLE rows for column stagger
-    [{"x": 3.5},                       "r0c3"],
-    [{"y": -0.875, "x": 2.5},          "r0c2", {"x": 1}, "r0c4"],
-    [{"y": -0.875, "x": 5.5},          "r0c5"],
-    [{"y": -0.875, "x": 0, "w": 1.5},  "r0c0", "r0c1"],
-    [{"y": -0.625, "x": 6.5},          "r0c6"],
-    # Physical row 1
-    [{"y": -0.75,  "x": 3.5},          "r1c3"],
-    [{"y": -0.875, "x": 2.5},          "r1c2", {"x": 1}, "r1c4"],
-    [{"y": -0.875, "x": 5.5},          "r1c5"],
-    [{"y": -0.875, "x": 0, "w": 1.5},  "r1c0", "r1c1"],
-    [{"y": -0.625, "x": 6.5, "h": 1.5},"r1c6"],
-    # Physical row 2
-    [{"y": -0.75,  "x": 3.5},          "r2c3"],
-    [{"y": -0.875, "x": 2.5},          "r2c2", {"x": 1}, "r2c4"],
-    [{"y": -0.875, "x": 5.5},          "r2c5"],
-    [{"y": -0.875, "x": 0, "w": 1.5},  "r2c0", "r2c1"],
-    # Physical row 3
-    [{"y": -0.375, "x": 3.5},          "r3c3"],
-    [{"y": -0.875, "x": 2.5},          "r3c2", {"x": 1}, "r3c4"],
-    [{"y": -0.875, "x": 5.5},          "r3c5"],
-    [{"y": -0.875, "x": 0, "w": 1.5},  "r3c0", "r3c1"],
-    # Physical row 4 bottom (only cols 0-3 have regular keys here;
-    # cols 4-6 are thumb cluster)
-    [{"y": -0.375, "x": 3.5},          "r4c3"],
-    [{"y": -0.875, "x": 2.5},          "r4c2"],
-    [{"y": -0.75,  "x": 0.5},          "r4c0", "r4c1"],
+_kicad_switches = [
+    # Row 0 (top) — K0 … K6
+    # ref    x         y         rot   footprint
+    ("K0",  91.44,    66.675,   0,    "1.25u"),
+    ("K1",  113.03,   66.675,   0,    "1u"),
+    ("K2",  132.08,   62.23,    0,    "1u"),
+    ("K3",  151.13,   59.69,    0,    "1u"),
+    ("K4",  170.18,   62.23,    0,    "1u"),
+    ("K5",  189.23,   64.135,   0,    "1u"),
+    ("K6",  208.28,   73.66,    0,    "1u"),
+    # Row 1 — K10 … K16
+    ("K10", 91.44,    85.725,   0,    "1.25u"),
+    ("K11", 113.03,   85.725,   0,    "1u"),
+    ("K12", 132.08,   81.28,    0,    "1u"),
+    ("K13", 151.13,   78.74,    0,    "1u"),
+    ("K14", 170.18,   81.28,    0,    "1u"),
+    ("K15", 189.23,   83.185,   0,    "1u"),
+    ("K16", 208.28,   97.79,    270,   "1.5u"),   # [ key, h=1.5
+    # Row 2 — K20 … K26
+    ("K20", 91.44,    104.775,  0,    "1.25u"),
+    ("K21", 113.03,   104.775,  0,    "1u"),
+    ("K22", 132.08,   100.33,   0,    "1u"),
+    ("K23", 151.13,   97.79,    0,    "1u"),
+    ("K24", 170.18,   100.33,   0,    "1u"),
+    ("K25", 189.23,   102.235,  0,    "1u"),
+    ("K26", 212.09,   127.635,  330,   "1u"),      # PgUp thumb
+    # Row 3 — K30 … K36
+    ("K30", 91.44,    123.825,  0,    "1.25u"),
+    ("K31", 113.03,   123.825,  0,    "1u"),
+    ("K32", 132.08,   119.38,   0,    "1u"),
+    ("K33", 151.13,   116.84,   0,    "1u"),
+    ("K34", 170.18,   119.38,   0,    "1u"),
+    ("K35", 189.23,   121.285,  0,    "1u"),
+    ("K36", 228.6,    137.16,   330,   "1u"),      # PgDn thumb
+    # Row 4 (bottom) — K40 … K46
+    ("K40", 93.98,    142.875,  0,    "1u"),
+    ("K41", 113.03,   142.875,  0,    "1u"),
+    ("K42", 132.08,   138.43,   0,    "1u"),
+    ("K43", 151.13,   135.89,   0,    "1u"),
+    ("K44", 176.53,   141.605,  345,   "1.25u"),    # LCtrl thumb
+    ("K45", 200.025,  148.59,   240,   "1.5u"),     # Backspace thumb
+    ("K46", 216.535,  158.115,  240,   "1.5u"),     # Delete thumb
 ]
 
-# Parse via klavgen's built-in KLE → Key converter
-_kg_path = "/tmp/_redox_main.kle.json"
-with open(_kg_path, "w") as f:
-    json.dump(_KLE_MAIN_GRID, f)
+# Convert KiCad → klavgen coordinates.
+# KiCad  y increases downward, klavgen y increases upward → negate.
+# Shift origin so the layout centres nicely (subtract K3's x, K3's negated y).
+ref_x  = 151.13   # K3 x (middle column, top row)
+ref_ny = -59.69   # -K3 y (negated for klavgen)
 
-main_keys = generate_keys_from_kle_json(_kg_path)
-assert len(main_keys) == 30, f"Expected 30 main-grid keys, got {len(main_keys)}"
+keys = []
+for ref, kx, ky, krot, ksize in _kicad_switches:
+    # klavgen x,y
+    x = kx - ref_x
+    y = -ky - ref_ny   # negate KiCad y then shift so K3 is at y=0
 
-# ---------------------------------------------------------------------------
-# Thumb cluster — positioned manually relative to the main grid
-# ---------------------------------------------------------------------------
+    # Keycap width / depth
+    w = None
+    d = None
+    if ksize == "1.25u":
+        w = KEYCAP_1_25U_WIDTH
+    elif ksize == "1.5u":
+        # K16 (rot 270) → wide keycap rotated to be tall → depth is the wider dimension
+        # K45, K46 (rot 240) → 1.5u-wide key, depth = standard 1u
+        if krot == 270:
+            d = KEYCAP_1_5U_HEIGHT
+        else:
+            w = MX_KEYCAP_1_5U_WIDTH
+            d = KEYCAP_1_5U_HEIGHT
 
-# Find reference points from the main grid
-main_bottom = min(k.y for k in main_keys)  # most-negative y = closest to user
-# Col 5 (index inner) bottom and Col 6 positions
-col5_keys = [k for k in main_keys if 100 < k.x < 110]
-col6_keys = [k for k in main_keys if 120 < k.x < 130]
-thumb_pivot_x = sum(k.x for k in col6_keys) / len(col6_keys)  # ~ 124
-thumb_pivot_y = main_bottom + KEYCAP_1_5U_HEIGHT / 2 + 2
+    # Rotation in klavgen: KiCad CCW = klavgen CCW (both positive = CCW)
+    rot = 0
+    if krot not in (0, 360):
+        # klavgen Key.rotate is CCW positive (same as KiCad)
+        rot = krot
 
-# Thumb keys fan out from the pivot point.  Rotation in klavgen is DEGREES
-# and the Key.rotate field is applied CCW (contrary to KLE's r which is also
-# CCW — so negative values here rotate CW).
-#
-# Redox thumb cluster, left half (all rotate clockwise so key tops tilt inward):
-#   LCtrl     (4,4)  — outer edge, 1.25u wide,      r = -15°
-#   Page Up   (2,6)  — upper fan,  1u,              r = -30°
-#   Page Down (3,6)  — middle fan, 1u,              r = -30°
-#   Backspace (4,5)  — lower fan,  1u wide × 1.5u tall
-#   Delete    (4,6)  — lower fan,  1u wide × 1.5u tall
+    keys.append(Key(
+        x=x, y=y,
+        keycap_width=w,
+        keycap_depth=d,
+        rotate=rot,
+    ))
 
-_THUMB_STEP = MX_KEY_X_SPACING + 1   # horizontal stride between fan keys
-_THUMB_Y_GAP = MX_KEY_Y_SPACING      # vertical stride
-
-thumb_keys = [
-    # LCtrl — outer thumb (rotated -15° around pivot)
-    Key(
-        x=thumb_pivot_x + 12,
-        y=main_bottom - KEYCAP_1_5U_HEIGHT / 2,
-        rotate=-15,
-        rotate_around=(thumb_pivot_x, thumb_pivot_y),
-        keycap_width=KEYCAP_1_25U_WIDTH,
-    ),
-    # Page Up — thumb fan top
-    Key(
-        x=thumb_pivot_x + _THUMB_STEP,
-        y=thumb_pivot_y - _THUMB_Y_GAP,
-        rotate=-30,
-        rotate_around=(thumb_pivot_x, thumb_pivot_y),
-    ),
-    # Page Down — thumb fan middle
-    Key(
-        x=thumb_pivot_x + _THUMB_STEP + _THUMB_STEP,
-        y=thumb_pivot_y - _THUMB_Y_GAP,
-        rotate=-30,
-        rotate_around=(thumb_pivot_x, thumb_pivot_y),
-    ),
-    # Backspace — thumb fan bottom (1.5u tall)
-    Key(
-        x=thumb_pivot_x + _THUMB_STEP,
-        y=thumb_pivot_y - _THUMB_Y_GAP - _THUMB_Y_GAP,
-        rotate=-30,
-        rotate_around=(thumb_pivot_x, thumb_pivot_y),
-        keycap_depth=KEYCAP_1_5U_HEIGHT,
-    ),
-    # Delete — thumb fan bottom right
-    Key(
-        x=thumb_pivot_x + _THUMB_STEP + _THUMB_STEP,
-        y=thumb_pivot_y - _THUMB_Y_GAP - _THUMB_Y_GAP,
-        rotate=-30,
-        rotate_around=(thumb_pivot_x, thumb_pivot_y),
-        keycap_depth=KEYCAP_1_5U_HEIGHT,
-    ),
-]
+assert len(keys) == 35, f"Expected 35 keys, got {len(keys)}"
 
 # ---------------------------------------------------------------------------
-# Combine all keys
-# ---------------------------------------------------------------------------
-keys = main_keys + thumb_keys
-assert len(keys) == 35, f"Expected 35 total keys, got {len(keys)}"
-
-# ---------------------------------------------------------------------------
-# Case outline — bounding box of all keys + margin
+# Case outline
 # ---------------------------------------------------------------------------
 margin = config.mx_key_config.case_tile_margin
 xs = [k.x for k in keys]
 ys = [k.y for k in keys]
-min_x, max_x = min(xs) - margin, max(xs) + margin
+min_x, max_x = min(xs) - margin, max(xs) + margin + 20  # room for controller
 min_y, max_y = min(ys) - margin, max(ys) + margin
-
-# Expand a bit on the right for the controller area
-max_x += 20
 
 h = config.case_config.case_base_height
 patches = [
@@ -211,7 +168,7 @@ screw_holes = [
 ]
 
 # ---------------------------------------------------------------------------
-# Palm rests (optional — comment out if unwanted)
+# Palm rests
 # ---------------------------------------------------------------------------
 pr_depth = 30
 palm_rests = [
@@ -236,7 +193,9 @@ elif use_choc:
     label = "Choc"
 else:
     label = "MX"
-print(f"Generating Redox {label} keyboard — {len(keys)} keys")
+
+print(f"Generating Redox {label} — {len(keys)} keys")
+print(f"  Positions from redox_rev1.kicad_pcb")
 print(f"  Bounding box: [{min_x:.0f}, {min_y:.0f}] – [{max_x:.0f}, {max_y:.0f}] mm")
 
 keyboard_result = render_and_save_keyboard(
