@@ -8,13 +8,19 @@ from .utils import grow_yz
 
 def render_controller_case_cutout_and_support(
     controller: Controller,
-    config: ControllerConfig = ControllerConfig(),
-    case_config: CaseConfig = CaseConfig(),
+    config: ControllerConfig = None,
+    case_config: CaseConfig = None,
 ) -> RenderedSideHolder:
+    if config is None:
+        config = ControllerConfig()
+    if case_config is None:
+        case_config = CaseConfig()
     return render_side_case_hole_rail(controller, config, case_config)
 
 
-def render_controller_holder(config: Config = Config()):
+def render_controller_holder(config: Config = None):
+    if config is None:
+        config = Config()
     c_config = config.controller_config
 
     wp = cq.Workplane("XY")

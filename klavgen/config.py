@@ -279,9 +279,9 @@ class KailhChocSocketConfig(SocketConfig):
 
 @dataclass
 class MXSwitchHolderConfig:
-    case_config: CaseConfig = CaseConfig()
-    key_config: MXKeyConfig = MXKeyConfig()
-    kailh_socket_config: KailhMXSocketConfig = KailhMXSocketConfig()
+    case_config: CaseConfig = field(default_factory=CaseConfig)
+    key_config: MXKeyConfig = field(default_factory=MXKeyConfig)
+    kailh_socket_config: KailhMXSocketConfig = field(default_factory=KailhMXSocketConfig)
 
     # Switch hole
     switch_bottom_height: float = 5
@@ -538,8 +538,8 @@ class MXSwitchHolderConfig:
 
 @dataclass
 class ChocSwitchHolderConfig(MXSwitchHolderConfig):
-    key_config: ChocKeyConfig = ChocKeyConfig()
-    kailh_socket_config: KailhChocSocketConfig = KailhChocSocketConfig()
+    key_config: ChocKeyConfig = field(default_factory=ChocKeyConfig)
+    kailh_socket_config: KailhChocSocketConfig = field(default_factory=KailhChocSocketConfig)
 
     switch_bottom_height: float = 2.2
 
@@ -742,25 +742,25 @@ class ConnectorConfig:
 
 @dataclass
 class Config:
-    case_config: CaseConfig = CaseConfig()
+    case_config: CaseConfig = field(default_factory=CaseConfig)
 
-    mx_key_config: MXKeyConfig = MXKeyConfig()
-    choc_key_config: ChocKeyConfig = ChocKeyConfig()
+    mx_key_config: MXKeyConfig = field(default_factory=MXKeyConfig)
+    choc_key_config: ChocKeyConfig = field(default_factory=ChocKeyConfig)
 
-    screw_hole_config: ScrewHoleConfig = ScrewHoleConfig()
+    screw_hole_config: ScrewHoleConfig = field(default_factory=ScrewHoleConfig)
 
-    kailh_mx_socket_config: KailhMXSocketConfig = KailhMXSocketConfig()
-    kailh_choc_socket_config: KailhChocSocketConfig = KailhChocSocketConfig()
+    kailh_mx_socket_config: KailhMXSocketConfig = field(default_factory=KailhMXSocketConfig)
+    kailh_choc_socket_config: KailhChocSocketConfig = field(default_factory=KailhChocSocketConfig)
 
-    switch_holder_mx_config: MXSwitchHolderConfig = MXSwitchHolderConfig()
-    switch_holder_choc_config: ChocSwitchHolderConfig = ChocSwitchHolderConfig()
+    switch_holder_mx_config: MXSwitchHolderConfig = field(default_factory=MXSwitchHolderConfig)
+    switch_holder_choc_config: ChocSwitchHolderConfig = field(default_factory=ChocSwitchHolderConfig)
 
-    controller_config: ControllerConfig = ControllerConfig()
+    controller_config: ControllerConfig = field(default_factory=ControllerConfig)
 
-    trrs_jack_config: TrrsJackConfig = TrrsJackConfig()
-    usbc_jack_config: USBCJackConfig = USBCJackConfig()
+    trrs_jack_config: TrrsJackConfig = field(default_factory=TrrsJackConfig)
+    usbc_jack_config: USBCJackConfig = field(default_factory=USBCJackConfig)
 
-    connector_config: ConnectorConfig = ConnectorConfig()
+    connector_config: ConnectorConfig = field(default_factory=ConnectorConfig)
 
     def __post_init__(self):
         self.switch_holder_mx_config.reset_dependencies(

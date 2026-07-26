@@ -8,13 +8,19 @@ from .utils import grow_yz
 
 def render_trrs_jack_case_cutout_and_support(
     trrs_jack: TrrsJack,
-    config: TrrsJackConfig = TrrsJackConfig(),
-    case_config: CaseConfig = CaseConfig(),
+    config: TrrsJackConfig = None,
+    case_config: CaseConfig = None,
 ) -> RenderedSideHolder:
+    if config is None:
+        config = TrrsJackConfig()
+    if case_config is None:
+        case_config = CaseConfig()
     return render_side_case_hole_rail(trrs_jack, config, case_config)
 
 
-def render_trrs_jack_holder(config: TrrsJackConfig = TrrsJackConfig()):
+def render_trrs_jack_holder(config: TrrsJackConfig = None):
+    if config is None:
+        config = TrrsJackConfig()
     wp = cq.Workplane("XY")
 
     base_width = (
